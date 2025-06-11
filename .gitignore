@@ -89,3 +89,4 @@ Thumbs.db
 
 # Blockchain data
 data/
+.vercel

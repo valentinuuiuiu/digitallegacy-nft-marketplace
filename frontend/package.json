@@ -5,10 +5,10 @@
   "main": "server.js",
   "scripts": {
     "build:css": "tailwindcss -i ./src/styles/tailwind.css -o ./src/assets/css/tailwind.css",
-    "build": "npm run build:css && mkdir -p dist && cp -r . dist/ && rm -rf dist/node_modules dist/.env",
+    "build": "npm run build:css",
     "start": "node server.js",
     "dev": "npm run build:css & nodemon server.js",
-    "preview": "npm run build && cd dist && python3 -m http.server 8080"
+    "preview": "npm run build && python3 -m http.server 8080"
   },
   "dependencies": {
     "cors": "^2.8.5",
