@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigitalLegacy - Preserve Your Digital Creations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+    <script src="app.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            scroll-behavior: smooth;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-3d {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+            transform: perspective(1000px) rotateY(0deg);
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-3d:hover {
+            transform: perspective(1000px) rotateY(5deg) translateY(-10px);
+            box-shadow: 0 30px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .rotate-3d {
+            animation: rotate 20s infinite linear;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotateY(0deg); }
+            to { transform: rotateY(360deg); }
+        }
+        
+        .floating {
+            animation: floating 6s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(0.95); }
+        }
+        
+        .feature-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover .feature-icon {
+            transform: scale(1.2) rotate(10deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full bg-white shadow-sm z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-code text-3xl text-purple-600 mr-2"></i>
+                        <span class="text-xl font-bold text-gray-900">DigitalLegacy</span>
+                    </a>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+                    <a href="#features" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Features</a>
+                    <a href="#how-it-works" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">How It Works</a>
+                    <a href="#marketplace" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Marketplace</a>
+                    <a href="#pricing" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Pricing</a>
+                    <a href="#testimonials" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Success Stories</a>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div id="networkInfo" class="hidden items-center px-3 py-1 bg-gray-100 rounded-md text-sm">
+                        <div id="networkIndicator" class="w-2 h-2 rounded-full mr-2"></div>
+                        <span id="networkName"></span>
+                    </div>
+                    <div id="balanceInfo" class="hidden items-center px-3 py-1 bg-gray-100 rounded-md text-sm">
+                        <i class="fas fa-wallet mr-1"></i>
+                        <span id="ethBalance">0.00</span> ETH
+                    </div>
+                    <button id="connectWallet" class="ml-2 hidden md:inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200">
+                        <i class="fas fa-wallet mr-2"></i>
+                        Connect Wallet
+                    </button>
+                    <button class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div id="walletConnected" class="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg hidden items-center">
+        <i class="fas fa-wallet mr-2"></i>
+        <span id="walletAddress"></span>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient pt-32 pb-20 px-4 sm:px-6 lg:px-8 text-white">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">Monetize Your Digital Art The Smart Way</h1>
+                <p class="text-xl mb-8 text-purple-100">ArtFlow bridges the gap between NFT collectors and commercial buyers, helping artists earn from both worlds.</p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="#" class="px-8 py-3 bg-white text-purple-600 rounded-full font-bold hover:bg-gray-100 transition shadow-lg hover:shadow-xl">Start Earning Today</a>
+                    <a href="#how-it-works" class="px-8 py-3 border border-white text-white rounded-full font-bold hover:bg-white hover:bg-opacity-10 transition">How It Works</a>
+                </div>
+                <div class="mt-10 flex items-center space-x-4">
+                    <div class="flex -space-x-2">
+                        <img class="inline-block h-10 w-10 rounded-full ring-2 ring-white" src="https://randomuser.me/api/portraits/women/12.jpg" alt="">
+                        <img class="inline-block h-10 w-10 rounded-full ring-2 ring-white" src="https://randomuser.me/api/portraits/men/12.jpg" alt="">
+                        <img class="inline-block h-10 w-10 rounded-full ring-2 ring-white" src="https://randomuser.me/api/portraits/women/33.jpg" alt="">
+                    </div>
+                    <p class="text-purple-100">Join <span class="font-bold">5,000+</span> artists earning monthly</p>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="absolute -top-10 -left-10 w-64 h-64 bg-purple-400 rounded-full opacity-10 animate-pulse"></div>
+                <div class="absolute -bottom-10 -right-10 w-64 h-64 bg-purple-300 rounded-full opacity-10 animate-pulse"></div>
+                <div class="card-3d bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-6 border border-white border-opacity-20 relative overflow-hidden">
+                    <div class="absolute -top-20 -right-20 w-64 h-64 bg-purple-500 rounded-full opacity-10"></div>
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 class="text-xl font-bold">NFT License</h3>
+                                <p class="text-purple-200 text-sm">Commercial Use</p>
+                            </div>
+                            <i class="fas fa-ethereum text-2xl"></i>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl h-48 mb-6 relative overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1549383029-3094ce4c66bc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" alt="NFT Art" class="w-full h-full object-cover">
+                            <div class="absolute top-4 left-4 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-xs">Earnings: 2.5 ETH</div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-purple-200 text-sm">Sold to</p>
+                                <p class="font-bold">Advertising Agency</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-purple-200 text-sm">Price</p>
+                                <p class="font-bold">0.5 ETH</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Dual Monetization System</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Sell full ownership on NFT marketplaces AND license your art for commercial use</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="feature-card bg-gray-50 p-8 rounded-2xl transition-all duration-300 hover:shadow-xl hover:border-purple-500 border border-transparent">
+                    <div class="feature-icon w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mb-6 text-purple-600">
+                        <i class="fas fa-coins text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Royalty System</h3>
+                    <p class="text-gray-600">Earn 10-30% royalties every time your licensed art is resold or used by new clients.</p>
+                </div>
+                <div class="feature-card bg-gray-50 p-8 rounded-2xl transition-all duration-300 hover:shadow-xl hover:border-purple-500 border border-transparent">
+                    <div class="feature-icon w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mb-6 text-purple-600">
+                        <i class="fas fa-file-contract text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Smart Contracts</h3>
+                    <p class="text-gray-600">Automated, transparent licensing agreements that protect your rights and ensure payments.</p>
+                </div>
+                <div class="feature-card bg-gray-50 p-8 rounded-2xl transition-all duration-300 hover:shadow-xl hover:border-purple-500 border border-transparent">
+                    <div class="feature-icon w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mb-6 text-purple-600">
+                        <i class="fas fa-search-dollar text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Discovery Platform</h3>
+                    <p class="text-gray-600">Our algorithm matches your art with businesses needing exactly your style and theme.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">How ArtFlow Works</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Simple steps to start earning from your digital creations</p>
+            </div>
+            <div class="relative">
+                <div class="hidden md:block absolute inset-0 flex items-center justify-center">
+                    <div class="h-full w-0.5 bg-gradient-to-b from-purple-200 via-purple-500 to-purple-200"></div>
+                </div>
+                <div class="relative grid gap-8">
+                    <!-- Step 1 -->
+                    <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="flex-shrink-0 w-32 h-32 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-3xl border-4 border-white shadow-md relative z-10">
+                            1
+                        </div>
+                        <div class="card-3d bg-white p-8 rounded-2xl flex-1 md:ml-8">
+                            <h3 class="text-xl font-bold mb-3">Upload Your Art</h3>
+                            <p class="text-gray-600 mb-4">Create a free account and upload your digital artwork (PNG, JPG, SVG, or MP4 for animations). Our system supports all popular formats.</p>
+                            <div class="flex items-center space-x-4">
+                                <i class="fas fa-image text-purple-500"></i>
+                                <i class="fas fa-photo-film text-purple-500"></i>
+                                <i class="fas fa-file-code text-purple-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="flex-shrink-0 w-32 h-32 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-3xl border-4 border-white shadow-md relative z-10">
+                            2
+                        </div>
+                        <div class="card-3d bg-white p-8 rounded-2xl flex-1 md:ml-8">
+                            <h3 class="text-xl font-bold mb-3">Set Licensing Terms</h3>
+                            <p class="text-gray-600 mb-4">Choose your license types (web use, print, merchandise) and pricing. Our AI suggests competitive rates based on your art quality and market demand.</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">Web License</span>
+                                <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">Print License</span>
+                                <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">Merchandise</span>
+                                <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">Exclusive</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="flex-shrink-0 w-32 h-32 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-3xl border-4 border-white shadow-md relative z-10">
+                            3
+                        </div>
+                        <div class="card-3d bg-white p-8 rounded-2xl flex-1 md:ml-8">
+                            <h3 class="text-xl font-bold mb-3">Mint & List</h3>
+                            <p class="text-gray-600 mb-4">With one click, mint your NFT on Ethereum, Polygon, or Solana networks while automatically listing licensing options on ArtFlow.</p>
+                            <div class="flex items-center space-x-4">
+                                <i class="fab fa-ethereum text-purple-500"></i>
+                                <i class="fas fa-bolt text-purple-500"></i>
+                                <i class="fab fa-solana text-purple-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 4 -->
+                    <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="flex-shrink-0 w-32 h-32 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-3xl border-4 border-white shadow-md relative z-10">
+                            4
+                        </div>
+                        <div class="card-3d bg-white p-8 rounded-2xl flex-1 md:ml-8">
+                            <h3 class="text-xl font-bold mb-3">Earn Money</h3>
+                            <p class="text-gray-600 mb-4">Receive payments in crypto or fiat currency when collectors buy full ownership OR when businesses license your art (you keep 85% of every sale).</p>
+                            <div class="flex items-center space-x-4 text-2xl">
+                                <i class="fas fa-money-bill-wave text-green-500"></i>
+                                <i class="fas fa-wallet text-blue-500"></i>
+                                <i class="fas fa-coins text-yellow-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Marketplace Preview -->
+    <section id="marketplace" class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Featured in Marketplace</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Artists earning from both collector purchases and commercial licensing</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Item 1 -->
+                <div class="card-3d bg-white rounded-xl overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-2">
+                    <div class="relative h-64">
+                        <img src="https://images.unsplash.com/photo-1637858868799-7f26a0640eb6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGRpZ2l0YWwlMjBhcnR8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60" alt="Digital Art" class="w-full h-full object-cover">
+                        <div class="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+                            <i class="fas fa-ethereum mr-1"></i> 2.1
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-start justify-between mb-3">
+                            <h3 class="text-xl font-bold">Cyberpunk Cityscape</h3>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Licenses sold</p>
+                                <p class="font-bold">12</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mb-4">Futuristic city visualization perfect for game backgrounds, book covers, and tech branding.</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Artist" class="w-8 h-8 rounded-full mr-2">
+                                <span class="text-sm">@neon_artist</span>
+                            </div>
+                            <span class="text-sm font-bold text-purple-600">$1,450 earned</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Item 2 -->
+                <div class="card-3d bg-white rounded-xl overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-2">
+                    <div class="relative h-64">
+                        <img src="https://images.unsplash.com/photo-1579547945413-497e1b99dac0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGRpZ2l0YWwlMjBhcnR8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60" alt="Digital Art" class="w-full h-full object-cover">
+                        <div class="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+                            <i class="fas fa-ethereum mr-1"></i> 1.5
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-start justify-between mb-3">
+                            <h3 class="text-xl font-bold">Abstract Vibrance</h3>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Licenses sold</p>
+                                <p class="font-bold">8</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mb-4">Bold abstract piece ideal for magazine features, wall art prints, and home decor.</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Artist" class="w-8 h-8 rounded-full mr-2">
+                                <span class="text-sm">@abstractvision</span>
+                            </div>
+                            <span class="text-sm font-bold text-purple-600">$890 earned</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Item 3 -->
+                <div class="card-3d bg-white rounded-xl overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-2">
+                    <div class="relative h-64">
+                        <img src="https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fGRpZ2l0YWwlMjBhcnR8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60" alt="Digital Art" class="w-full h-full object-cover">
+                        <div class="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+                            <i class="fas fa-ethereum mr-1"></i> 3.7
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-start justify-between mb-3">
+                            <h3 class="text-xl font-bold">Cosmic Harmony</h3>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Licenses sold</p>
+                                <p class="font-bold">21</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mb-4">Celestial artwork used by meditation apps, album covers, and spiritual brands.</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Artist" class="w-8 h-8 rounded-full mr-2">
+                                <span class="text-sm">@stella_art</span>
+                            </div>
+                            <span class="text-sm font-bold text-purple-600">$2,730 earned</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-12 text-center">
+                <a href="#" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-purple-600 hover:bg-purple-700 transition">
+                    Explore Marketplace
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-purple-50 to-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Simple & Fair Pricing</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Our fees are lower than traditional marketplaces and NFT platforms</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <!-- Free Tier -->
+                <div class="card-3d bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-purple-300">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold mb-2">Starter</h3>
+                        <p class="text-gray-600 mb-6">Perfect for new artists testing the market</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold">Free</span>
+                            <span class="text-gray-500">forever</span>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>5 free listings per month</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>10% commission on licenses</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Basic discoverability</span>
+                            </li>
+                            <li class="flex items-center text-gray-400">
+                                <i class="fas fa-times text-red-300 mr-2"></i>
+                                <span>No premium placement</span>
+                            </li>
+                            <li class="flex items-center text-gray-400">
+                                <i class="fas fa-times text-red-300 mr-2"></i>
+                                <span>No AI recommendations</span>
+                            </li>
+                        </ul>
+                        <a href="#" class="block text-center w-full px-4 py-3 border border-gray-300 rounded-full font-medium hover:bg-gray-50 transition">Start Free</a>
+                    </div>
+                </div>
+                <!-- Pro Tier -->
+                <div class="card-3d bg-purple-600 text-white rounded-xl overflow-hidden transform scale-105 relative">
+                    <div class="absolute top-0 right-0 bg-yellow-400 text-purple-800 px-3 py-1 font-bold text-sm">BEST VALUE</div>
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold mb-2">Professional</h3>
+                        <p class="text-purple-100 mb-6">For serious artists wanting maximum exposure</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold">$19</span>
+                            <span class="text-purple-200">/month</span>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-white mr-2"></i>
+                                <span>Unlimited listings</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-white mr-2"></i>
+                                <span>7% commission on licenses</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-white mr-2"></i>
+                                <span>Enhanced discoverability</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-white mr-2"></i>
+                                <span>Weekly featured placement</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-white mr-2"></i>
+                                <span>AI-powered recommendations</span>
+                            </li>
+                        </ul>
+                        <a href="#" class="block text-center w-full px-4 py-3 bg-white text-purple-600 rounded-full font-bold hover:bg-gray-100 transition">Get Professional</a>
+                    </div>
+                </div>
+                <!-- Business Tier -->
+                <div class="card-3d bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-purple-300">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold mb-2">Studio</h3>
+                        <p class="text-gray-600 mb-6">For teams and professional studios</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold">$99</span>
+                            <span class="text-gray-500">/month</span>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Everything in Professional</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>5% commission on licenses</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Team accounts (5 members)</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Daily featured placement</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Priority customer support</span>
+                            </li>
+                        </ul>
+                        <a href="#" class="block text-center w-full px-4 py-3 border border-gray-300 rounded-full font-medium hover:bg-gray-50 transition">Get Studio</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Artist Success Stories</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Hear from creators who've transformed their careers with ArtFlow</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Testimonial 1 -->
+                <div class="card-3d bg-gray-50 rounded-2xl p-8 relative overflow-hidden">
+                    <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-purple-200 rounded-full opacity-10"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-start mb-6">
+                            <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Artist" class="w-16 h-16 rounded-full border-2 border-white shadow-md">
+                            <div class="ml-4">
+                                <h4 class="font-bold">Maya Rodriguez</h4>
+                                <p class="text-sm text-gray-600">@mayadigital</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 mb-6">"I was skeptical at first, but ArtFlow helped me earn $12,000 in 6 months from licenses alone—on top of my normal NFT sales. The platform is intuitive and the community is supportive."</p>
+                        <div class="flex items-center">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Testimonial 2 -->
+                <div class="card-3d bg-gray-50 rounded-2xl p-8 relative overflow-hidden">
+                    <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-purple-200 rounded-full opacity-10"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-start mb-6">
+                            <img src="https://randomuser.me/api/portraits/men/45.jpg" alt="Artist" class="w-16 h-16 rounded-full border-2 border-white shadow-md">
+                            <div class="ml-4">
+                                <h4 class="font-bold">Thomas Chen</h4>
+                                <p class="text-sm text-gray-600">@toms3dart</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 mb-6">"My 3D renders were being stolen and used commercially without my permission. ArtFlow's licensing system now ensures I get paid when brands want to use my work—and I've gotten four big commissions because of it!"</p>
+                        <div class="flex items-center">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Testimonial 3 -->
+                <div class="card-3d bg-gray-50 rounded-2xl p-8 relative overflow-hidden">
+                    <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-purple-200 rounded-full opacity-10"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-start mb-6">
+                            <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Artist" class="w-16 h-16 rounded-full border-2 border-white shadow-md">
+                            <div class="ml-4">
+                                <h4 class="font-bold">Sophie Laurent</h4>
+                                <p class="text-sm text-gray-600">@sophiecreates</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 mb-6">"As an illustrator transitioning from traditional to digital, ArtFlow's guidance helped me price my work correctly. In three months, I've made more than I did in a year with stock sites—and retained my artistic integrity."</p>
+                        <div class="flex items-center">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <i class="fas fa-star-half-alt text-yellow-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 hero-gradient">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="relative overflow-hidden rounded-2xl p-8 md:p-12">
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-90"></div>
+                <div class="absolute -top-20 -left-20 w-64 h-64 bg-purple-300 rounded-full opacity-20"></div>
+                <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-300 rounded-full opacity-20"></div>
+                <div class="relative">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">Ready to Monetize Your Creativity?</h2>
+                    <p class="text-xl text-purple-100 mb-8 max-w-3xl mx-auto">Join thousands of artists earning passive income from their digital art through dual monetization.</p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-4">
+                        <a href="#" class="px-8 py-4 bg-white text-purple-600 rounded-full font-bold hover:bg-gray-100 transition shadow-lg hover:shadow-xl">Create Free Account</a>
+                        <a href="#" class="px-8 py-4 border border-white text-white rounded-full font-bold hover:bg-white hover:bg-opacity-10 transition">See Live Demo</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="text-lg font-bold mb-4">ArtFlow</h3>
+                <p class="text-gray-400">The smart way for digital artists to monetize their creativity in both NFT and commercial markets.</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-4">For Artists</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">How It Works</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">Pricing</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">Marketplace</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">Success Stories</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-4">For Buyers</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">Find Art</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">License Types</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">Enterprise Solutions</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">API Access</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-4">Company</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">About Us</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">Blog</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">Careers</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+                <p class="text-gray-400">© 2023 DigitalFlow. All rights reserved.</p>
+            </div>
+            <div class="flex space-x-6">
+                <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-discord"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-tiktok"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating action button -->
+    <div class="fixed bottom-8 right-8 z-50">
+        <a href="#" class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center shadow-lg hover:bg-purple-700 transition transform hover:scale-110">
+            <i class="fas fa-comment-dots text-white text-2xl"></i>
+        </a>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-xl">
+        <div class="p-4 border-b">
+            <h3 class="text-lg font-semibold">DigitalFlow Assistant</h3>
+        </div>
+        <div id="chatMessages" class="p-4 h-96 overflow-y-auto"></div>
+        <form id="chatForm" class="p-4 border-t">
+            <div class="flex space-x-2">
+                <input
+                    type="text"
+                    id="chatInput"
+                    class="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="Ask about DigitalFlow..."
+                >
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Error Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50"></div>
+
+    <script>
+        // Web3 and MetaMask hooks
+        let provider;
+        let signer;
+        const connectWallet = document.getElementById('connectWallet');
+        const walletConnected = document.getElementById('walletConnected');
+        const walletAddress = document.getElementById('walletAddress');
+        
+        async function initWeb3() {
+            if (window.ethereum) {
+                try {
+                    // Request account access
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    
+                    // Get wallet address
+                    const address = await signer.getAddress();
+                    const shortAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+                    
+                    // Update UI
+                    walletAddress.textContent = shortAddress;
+                    walletConnected.classList.remove('hidden');
+                    connectWallet.textContent = 'Connected';
+                    connectWallet.classList.remove('bg-purple-600');
+                    connectWallet.classList.add('bg-green-600', 'cursor-not-allowed');
+                    connectWallet.disabled = true;
+                    
+                    // Listen for account changes
+                    window.ethereum.on('accountsChanged', (accounts) => {
+                        if (accounts.length === 0) {
+                            // MetaMask is locked or user disconnected all accounts
+                            resetWalletConnection();
+                        } else {
+                            // Account changed, reload to update UI
+                            window.location.reload();
+                        }
+                    });
+                    
+                    // Listen for chain changes
+                    window.ethereum.on('chainChanged', () => {
+                        window.location.reload();
+                    });
+                    
+                    return true;
+                } catch (error) {
+                    console.error("User denied account access", error);
+                    return false;
+                }
+            } else {
+                alert('Please install MetaMask to use DigitalFlow!');
+                return false;
+            }
+        }
+        
+        function resetWalletConnection() {
+            walletConnected.classList.add('hidden');
+            connectWallet.textContent = 'Connect Wallet';
+            connectWallet.classList.add('bg-purple-600');
+            connectWallet.classList.remove('bg-green-600', 'cursor-not-allowed');
+            connectWallet.disabled = false;
+        }
+        
+        // Connect wallet button event listener
+        connectWallet.addEventListener('click', initWeb3);
+        
+        // Check if wallet is already connected on page load
+        window.addEventListener('load', async () => {
+            if (window.ethereum && window.ethereum.selectedAddress) {
+                await initWeb3();
+            }
+        });
+        
+        // Simple animation trigger on scroll
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.card-3d');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = 1;
+                        entry.target.style.transform = 'perspective(1000px) rotateY(0deg) translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            cards.forEach(card => {
+                card.style.opacity = 0;
+                card.style.transform = 'perspective(1000px) rotateY(10deg) translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                observer.observe(card);
+            });
+            
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

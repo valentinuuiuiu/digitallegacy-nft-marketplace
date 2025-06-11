@@ -1,0 +1,301 @@
+class MarketplacePage {
+    constructor() {
+        this.nfts = [];
+        this.filters = {
+            category: 'all',
+            sortBy: 'latest',
+            minPrice: '',
+            maxPrice: ''
+        };
+    }
+
+    async initialize() {
+        try {
+            showNotification('Loading NFTs...', 'info');
+            const nftsForSale = await NFTManager.getAllNFTsForSale();
+            
+            // Fetch metadata for each NFT
+            this.nfts = await Promise.all(
+                nftsForSale.map(async (nft) => {
+                    try {
+                        const nftWithMetadata = await NFTManager.getNFTDetailsWithMetadata(nft.tokenId);
+                        return {
+                            ...nft,
+                            ...nftWithMetadata,
+                            // Ensure price is from the sale info
+                            price: nft.price
+                        };
+                    } catch (error) {
+                        console.warn(`Failed to load metadata for NFT ${nft.tokenId}:`, error);
+                        return {
+                            ...nft,
+                            name: `NFT #${nft.tokenId}`,
+                            description: 'Metadata unavailable',
+                            image: '',
+                            attributes: []
+                        };
+                    }
+                })
+            );
+            
+            this.render();
+            this.attachEventListeners();
+            showNotification(`Loaded ${this.nfts.length} NFTs`, 'success');
+        } catch (error) {
+            console.error('Error initializing marketplace:', error);
+            showError('Failed to load NFTs: ' + error.message);
+        }
+    }
+
+    render() {
+        const appContainer = document.getElementById('app') || document.getElementById('main');
+        if (!appContainer) return;
+        
+        const content = `
+        <div class="min-h-screen bg-gray-50">
+            <!-- Hero Section -->
+            <section class="hero-gradient py-20 px-4 sm:px-6 lg:px-8 text-white">
+                <div class="max-w-7xl mx-auto text-center">
+                    <div class="floating">
+                        <h1 class="text-4xl md:text-5xl font-bold mb-4">Discover Amazing NFTs</h1>
+                        <p class="text-xl text-purple-100 mb-8 max-w-3xl mx-auto">Explore, collect, and trade unique digital assets from talented creators around the world</p>
+                    </div>
+                    <div class="flex justify-center space-x-4 mb-8">
+                        <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-lg px-6 py-3">
+                            <div class="text-2xl font-bold">${this.nfts.length}</div>
+                            <div class="text-sm text-purple-200">NFTs Available</div>
+                        </div>
+                        <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-lg px-6 py-3">
+                            <div class="text-2xl font-bold">${new Set(this.nfts.map(n => n.creator)).size}</div>
+                            <div class="text-sm text-purple-200">Artists</div>
+                        </div>
+                        <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-lg px-6 py-3">
+                            <div class="text-2xl font-bold">${this.nfts.reduce((sum, nft) => sum + parseFloat(nft.price || 0), 0).toFixed(2)}</div>
+                            <div class="text-sm text-purple-200">Total Value (ETH)</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <!-- Filters -->
+                <div class="card-3d bg-white rounded-2xl p-6 mb-8 shadow-lg">
+                    <h2 class="text-2xl font-bold gradient-text mb-6">Filter & Sort</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div>
+                            <label class="form-label">Category</label>
+                            <select id="categoryFilter" class="form-input">
+                                <option value="all">All Categories</option>
+                                <option value="art">🎨 Art</option>
+                                <option value="music">🎵 Music</option>
+                                <option value="video">🎬 Video</option>
+                                <option value="document">📄 Document</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="form-label">Sort By</label>
+                            <select id="sortFilter" class="form-input">
+                                <option value="latest">🕒 Latest</option>
+                                <option value="oldest">⏰ Oldest</option>
+                                <option value="priceAsc">💰 Price: Low to High</option>
+                                <option value="priceDesc">💎 Price: High to Low</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="form-label">Min Price (ETH)</label>
+                            <input type="number" id="minPriceFilter" class="form-input" placeholder="0.0" step="0.01" min="0">
+                        </div>
+                        
+                        <div>
+                            <label class="form-label">Max Price (ETH)</label>
+                            <input type="number" id="maxPriceFilter" class="form-input" placeholder="No limit" step="0.01" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-between items-center">
+                        <div class="text-sm text-gray-500">
+                            <span id="nftCount">${this.nfts.length}</span> NFTs found
+                        </div>
+                        <button id="clearFilters" class="btn-secondary">
+                            <i class="fas fa-times mr-2"></i>
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingNFTs" class="hidden text-center py-12">
+                    <div class="spinner mx-auto mb-4"></div>
+                    <p class="text-gray-600">Loading amazing NFTs...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="noNFTs" class="hidden text-center py-20">
+                    <div class="mb-8">
+                        <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">No NFTs Found</h3>
+                        <p class="text-gray-600 mb-6">Try adjusting your filters or check back later for new listings.</p>
+                        <button id="clearFiltersEmpty" class="btn-primary">
+                            <i class="fas fa-refresh mr-2"></i>
+                            Reset Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- NFT Grid -->
+                <div id="nftGrid" class="nft-grid">
+                    ${this.renderNFTs()}
+                </div>
+
+                <!-- Load More Button -->
+                <div id="loadMore" class="text-center mt-12 hidden">
+                    <button class="btn-secondary">
+                        <i class="fas fa-plus mr-2"></i>
+                        Load More NFTs
+                    </button>
+                </div>
+            </div>
+        </div>
+        `;
+        
+        appContainer.innerHTML = content;
+    }
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300">Min Price (ETH)</label>
+                            <input type="number" id="minPriceFilter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-700 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="0.00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300">Max Price (ETH)</label>
+                            <input type="number" id="maxPriceFilter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-700 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NFT Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="nftGrid">
+                    ${this.renderNFTs()}
+                </div>
+            </div>
+        </div>
+        `;
+
+        document.getElementById('main').innerHTML = content;
+    }
+
+    renderNFTs() {
+        if (this.nfts.length === 0) {
+            return `
+                <div class="col-span-full text-center py-12">
+                    <i class="fas fa-box-open text-4xl text-gray-500 mb-4"></i>
+                    <p class="text-gray-400">No NFTs found</p>
+                </div>
+            `;
+        }
+
+        return this.nfts
+            .filter(this.applyFilters.bind(this))
+            .sort(this.applySorting.bind(this))
+            .map(nft => this.renderNFTCard(nft))
+            .join('');
+    }
+
+    renderNFTCard(nft) {
+        return `
+        <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-2">
+            <div class="relative pb-2/3">
+                <img src="${nft.metadata}" alt="${nft.name}" class="absolute h-full w-full object-cover">
+            </div>
+            
+            <div class="p-4">
+                <h3 class="text-lg font-semibold text-white mb-2">${nft.name}</h3>
+                
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-sm text-gray-400">
+                        <span>Creator</span>
+                        <p class="text-purple-500">${this.shortenAddress(nft.creator)}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm text-gray-400">Price</span>
+                        <p class="text-lg font-bold text-white">${nft.price} ETH</p>
+                    </div>
+                </div>
+                
+                <button 
+                    onclick="window.marketplace.buyNFT('${nft.tokenId}')"
+                    class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors duration-200"
+                >
+                    Buy Now
+                </button>
+            </div>
+        </div>
+        `;
+    }
+
+    applyFilters(nft) {
+        const { category, minPrice, maxPrice } = this.filters;
+        
+        if (category !== 'all' && nft.category !== category) return false;
+        
+        const price = parseFloat(nft.price);
+        if (minPrice && price < parseFloat(minPrice)) return false;
+        if (maxPrice && price > parseFloat(maxPrice)) return false;
+        
+        return true;
+    }
+
+    applySorting(a, b) {
+        switch (this.filters.sortBy) {
+            case 'oldest':
+                return a.createdAt - b.createdAt;
+            case 'priceAsc':
+                return parseFloat(a.price) - parseFloat(b.price);
+            case 'priceDesc':
+                return parseFloat(b.price) - parseFloat(a.price);
+            case 'latest':
+            default:
+                return b.createdAt - a.createdAt;
+        }
+    }
+
+    attachEventListeners() {
+        document.getElementById('categoryFilter').addEventListener('change', (e) => {
+            this.filters.category = e.target.value;
+            this.render();
+        });
+
+        document.getElementById('sortFilter').addEventListener('change', (e) => {
+            this.filters.sortBy = e.target.value;
+            this.render();
+        });
+
+        document.getElementById('minPriceFilter').addEventListener('input', (e) => {
+            this.filters.minPrice = e.target.value;
+            this.render();
+        });
+
+        document.getElementById('maxPriceFilter').addEventListener('input', (e) => {
+            this.filters.maxPrice = e.target.value;
+            this.render();
+        });
+    }
+
+    async buyNFT(tokenId) {
+        try {
+            const nft = this.nfts.find(n => n.tokenId === tokenId);
+            if (!nft) throw new Error('NFT not found');
+
+            await NFTManager.buyNFT(tokenId, nft.price);
+            await this.initialize(); // Refresh the marketplace
+        } catch (error) {
+            console.error('Error buying NFT:', error);
+            showError(error.message);
+        }
+    }
+
+    shortenAddress(address) {
+        return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    }
+}
