@@ -2,6 +2,8 @@
 
 A modern, full-stack NFT marketplace built with Ethereum blockchain integration. Create, buy, sell, and trade digital assets with ease.
 
+🚀 **[Live Demo](https://digitallegacy-nft-marketplace-m6vx5mmzy.vercel.app)** | 📖 **[Documentation](#-quick-start)** | 🔗 **[GitHub Repo](https://github.com/valentinuuiuiu/digitallegacy-nft-marketplace)**
+
 ![DigitalLegacy Banner](https://via.placeholder.com/1200x400/8B5CF6/FFFFFF?text=DigitalLegacy+NFT+Marketplace)
 
 ## ✨ Features
@@ -169,20 +171,26 @@ npx hardhat run scripts/deploy.js --network mainnet
 
 ### Frontend Deployment
 
-#### Vercel (Recommended)
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Set environment variables in Vercel dashboard
+#### Vercel (Deployed) ✅
+**Live Site**: https://digitallegacy-nft-marketplace-m6vx5mmzy.vercel.app
+
+The frontend is successfully deployed on Vercel with automatic deployments configured for the main branch.
+
+**To deploy your own instance:**
+1. Fork this repository
+2. Connect your fork to Vercel
+3. Set environment variables in Vercel dashboard (if needed)
 4. Deploy automatically on push
 
-#### Netlify
+#### Alternative Platforms
+**Netlify**
 1. Build the project: `npm run build`
-2. Deploy the `dist` folder to Netlify
+2. Deploy the built files to Netlify
 3. Configure environment variables
 
-#### Traditional Hosting
+**Traditional Hosting**
 1. Build the project: `npm run build`
-2. Upload the `dist` folder to your web server
+2. Upload the built files to your web server
 
 ## 🤝 Contributing
 
