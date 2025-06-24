@@ -47,5 +47,9 @@
   "workspaces": [
     "frontend",
     "backend"
-  ]
+  ],
+  "dependencies": {
+    "ipfs-http-client": "^60.0.1",
+    "uuid": "^11.1.0"
+  }
 }

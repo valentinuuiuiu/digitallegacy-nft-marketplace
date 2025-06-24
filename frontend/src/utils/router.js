@@ -1,92 +1,82 @@
 class Router {
     constructor(routes) {
         this.routes = routes;
-        this.currentPage = null;
-        
-        // Use hash-based routing for compatibility
+        this.currentRoute = null;
+    }
+
+    start() {
         window.addEventListener('hashchange', () => this.handleRoute());
-        window.addEventListener('load', () => this.handleRoute());
-        
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('a[href^="#"]') || e.target.matches('a[href^="/"]')) {
-                e.preventDefault();
-                let href = e.target.getAttribute('href');
-                if (href.startsWith('/')) {
-                    href = '#' + href;
-                }
-                this.navigate(href);
-            }
-        });
+        this.handleRoute();
     }
 
     async handleRoute() {
-        let path = window.location.hash.slice(1) || '/';
+        const hash = window.location.hash.replace('#', '') || '/';
         
-        // Handle empty hash or just #
-        if (!path || path === '') {
-            path = '/';
-        }
-        
-        const route = this.routes[path] || this.routes['/404'];
-        
-        if (!route) {
-            console.error('No route found for path:', path);
+        // Handle redirects
+        if (this.routes[hash] && this.routes[hash].redirect) {
+            window.location.hash = this.routes[hash].redirect;
             return;
         }
         
-        // Clean up current page if needed
-        if (this.currentPage && this.currentPage.cleanup) {
-            this.currentPage.cleanup();
-        }
-        
-        // Initialize new page
-        this.currentPage = route.component;
-        document.title = route.title;
-        
-        try {
-            // Render page - check both containers for compatibility
-            const appContainer = document.getElementById('app');
-            const mainContainer = document.getElementById('main');
-            
-            if (this.currentPage.render) {
-                this.currentPage.render();
-            }
-            
-            // Initialize page if needed
-            if (this.currentPage.initialize) {
-                await this.currentPage.initialize();
-            }
-        } catch (error) {
-            console.error('Error rendering route:', error);
-            this.showError('Failed to load page');
+        // Load component if changed
+        if (this.currentRoute !== hash) {
+            this.currentRoute = hash;
+            await this.loadComponent(hash);
         }
     }
 
-    navigate(path) {
-        if (!path.startsWith('#')) {
-            path = '#' + path;
+    async loadComponent(hash) {
+        const routeConfig = this.routes[hash];
+        
+        if (!routeConfig) {
+            console.error(`Route not found: ${hash}`);
+            return;
         }
-        window.location.hash = path;
+
+        try {
+            // Show loading indicator
+            const main = document.getElementById('app');
+            if (main) {
+                main.innerHTML = `
+                    <div class="min-h-screen flex items-center justify-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                    </div>
+                `;
+            }
+
+            // Load component template
+            const response = await fetch(`/src/pages/${routeConfig.component}.html`);
+            if (!response.ok) throw new Error(`Failed to load ${routeConfig.component} template`);
+            
+            const template = await response.text();
+            
+            // Insert template into main content area
+            if (main) {
+                main.innerHTML = template;
+            }
+            
+            // Execute route initialization if defined
+            if (routeConfig.init) {
+                await routeConfig.init();
+            }
+        } catch (error) {
+            console.error(`Error loading route ${hash}:`, error);
+            this.showErrorPage();
+        }
     }
-    
-    showError(message) {
-        const container = document.getElementById('app') || document.getElementById('main');
-        if (container) {
-            container.innerHTML = `
-                <div class="min-h-screen bg-gray-900 flex items-center justify-center">
-                    <div class="text-center">
-                        <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-4"></i>
-                        <h2 class="text-2xl font-bold text-white mb-2">Error</h2>
-                        <p class="text-gray-400">${message}</p>
-                        <button onclick="window.location.reload()" class="mt-4 bg-purple-600 text-white px-4 py-2 rounded">
-                            Reload Page
-                        </button>
+
+    showErrorPage() {
+        const main = document.getElementById('app');
+        if (main) {
+            main.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center">
+                    <div class="text-center p-8 bg-white rounded-lg shadow-lg">
+                        <h1 class="text-2xl font-bold text-gray-800 mb-4">404 - Page Not Found</h1>
+                        <p class="text-gray-600 mb-6">The page you're looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
+                        <a href="#/marketplace" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">Back to Marketplace</a>
                     </div>
                 </div>
             `;
         }
     }
 }
-
-// Note: Routes are defined in app.js when instantiating the Router
-// The router will be initialized in app.js

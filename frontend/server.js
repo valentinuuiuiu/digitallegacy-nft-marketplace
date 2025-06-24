@@ -4,8 +4,8 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-// Try ports 3000, 3001, 3002 in sequence if previous ones are in use
-const PORT = process.env.PORT || 3000;
+// Starting port for server (with fallbacks to 3004, 3005)
+const PORT = process.env.PORT || 3003;
 
 // Middleware
 app.use(cors({
@@ -17,9 +17,9 @@ app.use(express.json());
 app.use((req, res, next) => {
     res.setHeader(
         'Content-Security-Policy',
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.ethers.io https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; " +
-        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; " +
-        "font-src 'self' https://cdnjs.cloudflare.com; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.ethers.io https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; " +
+        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
+        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; " +
         "img-src 'self' data: https: http:; " +
         "connect-src 'self' http://localhost:8545 https://sepolia.infura.io https://openrouter.ai ws://localhost:8545 wss://sepolia.infura.io; " +
         "default-src 'self';"

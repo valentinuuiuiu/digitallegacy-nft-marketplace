@@ -1,227 +1,215 @@
-// Initialize app when DOM is loaded
+// Initialize application after DOM is fully loaded
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Document content loaded, initializing application');
+    await initApp();
+});
+
+// Main application initialization
+async function initApp() {
     try {
-        console.log('🚀 Starting DigitalLegacy app initialization...');
-        
-        // Initialize Web3
-        console.log('📡 Initializing Web3...');
-        await initWeb3();
-        
-        // Check if classes are defined before instantiating
-        console.log('🔍 Checking component classes...');
-        if (typeof MarketplacePage === 'undefined') {
-            throw new Error('MarketplacePage is not defined. Check script loading order.');
-        }
-        if (typeof CreateNFTPage === 'undefined') {
-            throw new Error('CreateNFTPage is not defined. Check script loading order.');
-        }
-        if (typeof ProfilePage === 'undefined') {
-            throw new Error('ProfilePage is not defined. Check script loading order.');
+        // Check if already initialized
+        if (window.appInitialized) {
+            console.warn('Application already initialized');
+            return;
         }
         
-        // Initialize pages
-        console.log('📄 Initializing page components...');
-        window.marketplace = new MarketplacePage();
-        window.createPage = new CreateNFTPage();
-        window.profile = new ProfilePage();
+        // Mark as initialized
+        window.appInitialized = true;
         
-        console.log('✅ All components initialized successfully');
+        // Ensure all required components are defined
+        if (typeof Router === 'undefined') {
+            throw new Error('Router not found. Check script loading order.');
+        }
         
-        // Initialize router with routes - using new #app container
-        const routes = {
-            '/': {
-                title: 'DigitalLegacy - Preserve Your Digital Creations',
-                component: window.marketplace
-            },
+        if (typeof MarketplacePage === 'undefined' || 
+            typeof CreatePage === 'undefined' || 
+            typeof ProfilePage === 'undefined') {
+            throw new Error('Required page components not found. Check script loading order.');
+        }
+        
+        // Initialize router with routes
+        window.router = new Router({
             '/marketplace': {
-                title: 'DigitalLegacy - Marketplace',
-                component: window.marketplace
+                component: 'Marketplace',
+                init: async () => {
+                    if (typeof MarketplacePage === 'undefined') {
+                        throw new Error('MarketplacePage not defined. Check script loading order.');
+                    }
+                    window.marketplace = new MarketplacePage();
+                    await window.marketplace.initialize();
+                }
             },
             '/create': {
-                title: 'DigitalLegacy - Create NFT',
-                component: window.createPage
+                component: 'Create',
+                init: async () => {
+                    if (typeof CreatePage === 'undefined') {
+                        throw new Error('CreatePage not defined. Check script loading order.');
+                    }
+                    window.createPage = new CreatePage();
+                    window.createPage.initialize();
+                }
             },
             '/profile': {
-                title: 'DigitalLegacy - Profile',
-                component: window.profile
-            },
-            '/my-collection': {
-                title: 'DigitalLegacy - My Collection',
-                component: window.profile  // Reuse the profile component for now
-            },
-            '/404': {
-                title: 'DigitalLegacy - Page Not Found',
-                component: {
-                    render: () => {
-                        const appContainer = document.getElementById('app');
-                        if (appContainer) {
-                            appContainer.innerHTML = `
-                                <div class="min-h-screen flex items-center justify-center bg-gray-50">
-                                    <div class="text-center">
-                                        <div class="mb-8">
-                                            <i class="fas fa-exclamation-triangle text-6xl text-yellow-500 mb-4"></i>
-                                            <h1 class="text-6xl font-bold gradient-text mb-4">404</h1>
-                                            <p class="text-xl text-gray-600 mb-8">Oops! The page you're looking for doesn't exist.</p>
-                                        </div>
-                                        <div class="space-x-4">
-                                            <a href="/" class="btn-primary">
-                                                <i class="fas fa-home mr-2"></i>
-                                                Go Home
-                                            </a>
-                                            <a href="/marketplace" class="btn-secondary">
-                                                <i class="fas fa-store mr-2"></i>
-                                                Browse Marketplace
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        }
+                component: 'Profile',
+                init: async () => {
+                    if (typeof ProfilePage === 'undefined') {
+                        throw new Error('ProfilePage not defined. Check script loading order.');
                     }
+                    window.profilePage = new ProfilePage();
+                    await window.profilePage.initialize();
                 }
+            },
+            '/': {
+                redirect: '/marketplace'
             }
-        };
-
-        // Initialize router
-        console.log('🛣️  Initializing router...');
-        window.router = new Router(routes);
-        
-        // Setup navigation click handlers
-        setupNavigation();
-        
-        // Handle initial route
-        console.log('🎯 Starting initial route...');
-        window.router.handleRoute();
-        
-        // Connect wallet button handler
-        const connectWalletBtn = document.getElementById('connectWallet');
-        if (connectWalletBtn) {
-            connectWalletBtn.addEventListener('click', async () => {
-                if (!userAddress) {
-                    showLoadingOverlay(true);
-                    try {
-                        await connectWallet();
-                        showSuccess('Wallet connected successfully!');
-                    } catch (error) {
-                        showError('Failed to connect wallet: ' + error.message);
-                    } finally {
-                        showLoadingOverlay(false);
-                    }
-                }
-            });
-        }
-        
-        // Initialize animations after everything is loaded
-        setTimeout(() => {
-            initializeAnimations();
-        }, 100);
-        
-        console.log('🎉 App initialization complete!');
-        
-        // Hide initial loader
-        const initialLoader = document.getElementById('initialLoader');
-        if (initialLoader) {
-            initialLoader.style.transition = 'opacity 0.5s ease';
-            initialLoader.style.opacity = '0';
-            setTimeout(() => {
-                initialLoader.remove();
-            }, 500);
-        }
-        
-    } catch (error) {
-        console.error('❌ Failed to initialize app:', error);
-        
-        // Show error page
-        const container = document.getElementById('app') || document.getElementById('main') || document.body;
-        container.innerHTML = `
-            <div class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-                <div class="max-w-md w-full bg-gray-800 rounded-lg p-8 text-center">
-                    <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-6"></i>
-                    <h1 class="text-2xl font-bold text-white mb-4">App Failed to Load</h1>
-                    <p class="text-gray-400 mb-6">${error.message}</p>
-                    <div class="space-y-3">
-                        <button onclick="window.location.reload()" class="w-full bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
-                            <i class="fas fa-redo mr-2"></i>
-                            Reload Page
-                        </button>
-                        <button onclick="console.error('Debug info:', error)" class="w-full bg-gray-700 text-gray-300 px-4 py-2 rounded hover:bg-gray-600 transition-colors">
-                            <i class="fas fa-bug mr-2"></i>
-                            Show Debug Info
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-});
-
-// Create compatibility layer - if pages render to #main, copy to #app
-const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-        if (mutation.target.id === 'main' && mutation.type === 'childList') {
-            const mainContainer = document.getElementById('main');
-            const appContainer = document.getElementById('app');
-            if (mainContainer && appContainer && mainContainer.innerHTML.trim()) {
-                appContainer.innerHTML = mainContainer.innerHTML;
-                // Show the main container for compatibility
-                mainContainer.style.display = 'block';
-                mainContainer.classList.remove('hidden');
-                appContainer.style.display = 'none';
-            }
-        }
-    });
-});
-
-const mainContainer = document.getElementById('main');
-if (mainContainer) {
-    observer.observe(mainContainer, { childList: true, subtree: true });
-}
-
-// Auto-enable demo mode if URL contains ?demo
-if (window.location.search.includes('demo') || window.location.search.includes('sample')) {
-    window.isDemoMode = true;
-    console.log('Demo mode enabled via URL parameter');
-}
-
-// Setup navigation handlers
-function setupNavigation() {
-    const navLinks = document.querySelectorAll('nav a[href^="#"]');
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const path = link.getAttribute('href').substring(1); // Remove #
-            router.navigate(path || '/');
         });
-    });
+        
+        // Start routing
+        window.router.start();
+        
+        // Set up global event listeners
+        setupEventListeners();
+        
+        // Initialize page if loaded directly
+        if (window.location.hash) {
+            setTimeout(() => {
+                const fakeEvent = { target: { hash: window.location.hash } };
+                handleNavClick(fakeEvent);
+            }, 100);
+        }
+        
+        console.log('Application initialized successfully');
+    } catch (error) {
+        console.error('Error initializing application:', error);
+        showErrorUI();
+    }
 }
 
-// Enhanced buy NFT function with better UI feedback
-async function buyNFT(tokenId, price) {
-    if (!userAddress) {
-        showWarning('Please connect your wallet first');
-        return;
+// Set up global event listeners
+function setupEventListeners() {
+    // Navigation links
+    const navLinks = document.querySelectorAll('[data-nav]');
+    navLinks.forEach(link => {
+        link.removeEventListener('click', handleNavClick);
+        link.addEventListener('click', handleNavClick);
+    });
+    
+    // Wallet events
+    setupWalletEvents();
+    
+    // Offline/Online events
+    setupNetworkEvents();
+}
+
+// Handle navigation clicks with debounce
+function handleNavClick(e) {
+    try {
+        e.preventDefault();
+        
+        // Get the hash from the clicked element's href
+        const hash = e.target.hash || (e.target.closest('a') ? e.target.closest('a').hash : null);
+        
+        if (!hash) {
+            console.warn('No hash found in navigation click');
+            return;
+        }
+        
+        // Debounce navigation
+        if (window.lastNavClick && Date.now() - window.lastNavClick < 500) {
+            console.log('Debounced navigation');
+            return;
+        }
+        
+        window.lastNavClick = Date.now();
+        
+        // Update active navigation
+        document.querySelectorAll('[data-nav]').forEach(link => {
+            link.classList.remove('text-purple-600');
+            link.classList.add('text-gray-700');
+        });
+        
+        const currentLink = document.querySelector(`[data-nav='${hash.substring(1)}']`);
+        if (currentLink) {
+            currentLink.classList.add('text-purple-600');
+            currentLink.classList.remove('text-gray-700');
+        }
+        
+        // Navigate
+        window.router.goto(hash);
+    } catch (error) {
+        console.error('Navigation error:', error);
+        showError('Navigation failed. Please try again.');
+    }
+}
+
+// Setup wallet connection events
+function setupWalletEvents() {
+    // Ensure DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            const connectButton = document.getElementById('connectWallet');
+            if (connectButton) {
+                connectButton.removeEventListener('click', connectWallet);
+                connectButton.addEventListener('click', connectWallet);
+            }
+        });
+    } else {
+        const connectButton = document.getElementById('connectWallet');
+        if (connectButton) {
+            connectButton.removeEventListener('click', connectWallet);
+            connectButton.addEventListener('click', connectWallet);
+        }
     }
     
-    try {
-        showLoadingOverlay(true);
-        showNotification('Preparing to buy NFT...', 'info');
-        
-        await NFTManager.buyNFT(tokenId, price);
-        
-        showSuccess(`Successfully purchased NFT #${tokenId}!`);
-        
-        // Refresh the current page to show updated data
-        if (window.router) {
-            router.handleRoute();
-        }
-        
-    } catch (error) {
-        console.error('Error buying NFT:', error);
-        showError('Failed to buy NFT: ' + error.message);
-    } finally {
-        showLoadingOverlay(false);
+    // Handle wallet disconnection
+    if (window.ethersProvider) {
+        window.ethersProvider.on('disconnect', () => {
+            console.log('Wallet disconnected');
+            updateWalletUI();
+        });
     }
 }
 
-// Make buyNFT globally available
-window.buyNFT = buyNFT;
+// Handle network connectivity changes
+function setupNetworkEvents() {
+    window.addEventListener('online', () => {
+        console.log('Network connection restored');
+        showNotification('Connected to the internet', 'success');
+        updateWalletUI();
+    });
+    
+    window.addEventListener('offline', () => {
+        console.log('Network connection lost');
+        showNotification('You are offline', 'error');
+        updateWalletUI();
+    });
+}
+
+// Error UI for critical errors
+function showErrorUI(message = 'Failed to load application. Please reload the page.') {
+    const main = document.getElementById('app') || document.createElement('div');
+    main.innerHTML = `
+        <div class="min-h-screen flex flex-col items-center justify-center p-4">
+            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
+                <div class="text-red-500 text-4xl mb-4">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-4">Application Error</h1>
+                <p class="text-gray-600 mb-6">${message}</p>
+                <button onclick="location.reload()" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                    Reload Page
+                </button>
+                <div class="mt-6 text-sm text-gray-500">
+                    <p>Code: APP_INIT_FAILED</p>
+                    <p>Technical Details:</p>
+                    <pre class="mt-2 text-left overflow-auto max-h-40 text-xs bg-gray-50 p-2 rounded">${new Error().stack}</pre>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Replace app content if needed
+    if (!document.getElementById('app')) {
+        document.body.appendChild(main);
+    }
+}
