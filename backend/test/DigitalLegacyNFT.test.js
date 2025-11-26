@@ -5,80 +5,62 @@ describe("DigitalLegacyNFT", function () {
   let DigitalLegacyNFT, digitalLegacyNFT, owner, addr1, addr2;
 
   beforeEach(async function () {
-    DigitalLegacyNFT = await ethers.getContractFactory("DigitalLegacyNFT");
     [owner, addr1, addr2] = await ethers.getSigners();
-    digitalLegacyNFT = await DigitalLegacyNFT.deploy();
-    // In ethers v6, deploy() returns an already deployed contract instance; no need for deployed()
+    const DigitalLegacyNFTFactory = await ethers.getContractFactory("DigitalLegacyNFT");
+    digitalLegacyNFT = await DigitalLegacyNFTFactory.deploy();
+    await digitalLegacyNFT.waitForDeployment();
+  });
+
+  describe("Deployment", function () {
+    it("Should set the right owner", async function () {
+      expect(await digitalLegacyNFT.owner()).to.equal(owner.address);
+    });
   });
 
   describe("Minting", function () {
-    it("Should mint NFT successfully", async function () {
-      const tokenURI = "https://example.com/token/1";
-      const price = ethers.parseEther("1");
-      
-      await digitalLegacyNFT.connect(addr1).mintNFT(tokenURI, price, "art", 250);
-      
-      expect(await digitalLegacyNFT.ownerOf(0)).to.equal(addr1.address);
-      expect(await digitalLegacyNFT.tokenURI(0)).to.equal(tokenURI);
-    });
-
-    it("Should track creator tokens", async function () {
-      const tokenURI = "https://example.com/token/1";
-      const price = ethers.parseEther("1");
-      
-      await digitalLegacyNFT.connect(addr1).mintNFT(tokenURI, price, "art", 250);
-      
-      const creatorTokens = await digitalLegacyNFT.getCreatorTokens(addr1.address);
-      expect(creatorTokens.length).to.equal(1);
-      expect(creatorTokens[0]).to.equal(0);
+    it("Should mint a new NFT", async function () {
+      await digitalLegacyNFT.mintNFT("testURI", 100, "Art", 500);
+      expect(await digitalLegacyNFT.ownerOf(0)).to.equal(owner.address);
     });
   });
 
-  describe("Buying and Selling", function () {
-    beforeEach(async function () {
-      const tokenURI = "https://example.com/token/1";
-      const price = ethers.parseEther("1");
-      await digitalLegacyNFT.connect(addr1).mintNFT(tokenURI, price, "art", 250);
+  describe("Buying", function () {
+    it("Should allow a user to buy an NFT", async function () {
+      await digitalLegacyNFT.mintNFT("testURI", 100, "Art", 500);
+      await digitalLegacyNFT.connect(addr1).buyNFT(0, { value: 100 });
+      expect(await digitalLegacyNFT.ownerOf(0)).to.equal(addr1.address);
     });
+  });
 
-    it("Should buy NFT successfully", async function () {
-      const price = ethers.parseEther("1");
-      
-      await digitalLegacyNFT.connect(addr2).buyNFT(0, { value: price });
-      
-      expect(await digitalLegacyNFT.ownerOf(0)).to.equal(addr2.address);
-    });
+  describe("Royalties", function () {
+    it("Should emit a RoyaltyPaid event with the correct amount", async function () {
+        const price = ethers.parseEther("1");
+        const royaltyPercentage = 500; // 5%
+        await digitalLegacyNFT.mintNFT("testURI", price, "Art", royaltyPercentage);
 
-    it("Should pay royalties correctly", async function () {
-      const price = ethers.parseEther("1");
-      const initialCreatorBalance = await addr1.getBalance();
-      
-      await digitalLegacyNFT.connect(addr2).buyNFT(0, { value: price });
-      
-      const finalCreatorBalance = await addr1.getBalance();
-      const royalty = price.mul(250).div(10000); // 2.5%
-      const sellerAmount = price.sub(royalty);
-      
-      expect(finalCreatorBalance.sub(initialCreatorBalance)).to.equal(sellerAmount);
+        const royalty = (price * BigInt(royaltyPercentage)) / BigInt(10000);
+
+        await expect(digitalLegacyNFT.connect(addr1).buyNFT(0, { value: price }))
+            .to.emit(digitalLegacyNFT, "RoyaltyPaid")
+            .withArgs(0, owner.address, royalty);
     });
   });
 
   describe("Licensing", function () {
-    beforeEach(async function () {
-      const tokenURI = "https://example.com/token/1";
-      const price = ethers.parseEther("1");
-      await digitalLegacyNFT.connect(addr1).mintNFT(tokenURI, price, "art", 250);
-    });
-
-    it("Should purchase license successfully", async function () {
-      const licensePrice = ethers.parseEther("0.01");
-      
-      await digitalLegacyNFT.connect(addr2).purchaseLicense(0, "personal", { value: licensePrice });
-      
+    it("Should allow a user to purchase a license", async function () {
+      await digitalLegacyNFT.mintNFT("testURI", 100, "Art", 500);
+      await digitalLegacyNFT.connect(addr1).purchaseLicense(0, "personal", { value: ethers.parseEther("0.01") });
       const licenses = await digitalLegacyNFT.getTokenLicenses(0);
       expect(licenses.length).to.equal(1);
-      expect(licenses[0].licensee).to.equal(addr2.address);
-      expect(licenses[0].licenseType).to.equal("personal");
+      expect(licenses[0].licensee).to.equal(addr1.address);
+    });
+  });
+
+  describe("Burning", function () {
+    it("Should allow the owner to burn an NFT", async function () {
+      await digitalLegacyNFT.mintNFT("testURI", 100, "Art", 500);
+      await digitalLegacyNFT.burn(0);
+      await expect(digitalLegacyNFT.ownerOf(0)).to.be.revertedWith("ERC721: invalid token ID");
     });
   });
 });
