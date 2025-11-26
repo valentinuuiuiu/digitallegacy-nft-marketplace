@@ -6,9 +6,11 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 contract DigitalLegacyNFT is ERC721, ERC721URIStorage, ReentrancyGuard, Ownable {
     using Counters for Counters.Counter;
+    using Address for address payable;
     Counters.Counter private _tokenIdCounter;
     
     struct NFTItem {
@@ -101,15 +103,15 @@ contract DigitalLegacyNFT is ERC721, ERC721URIStorage, ReentrancyGuard, Ownable 
         item.price = 0;
         
         // Pay seller and creator
-        payable(seller).transfer(sellerAmount);
+        payable(seller).sendValue(sellerAmount);
         if (royalty > 0) {
-            payable(item.creator).transfer(royalty);
+            payable(item.creator).sendValue(royalty);
             emit RoyaltyPaid(tokenId, item.creator, royalty);
         }
         
         // Refund excess payment
         if (msg.value > salePrice) {
-            payable(msg.sender).transfer(msg.value - salePrice);
+            payable(msg.sender).sendValue(msg.value - salePrice);
         }
         
         emit NFTSold(tokenId, seller, msg.sender, salePrice);
@@ -150,11 +152,11 @@ contract DigitalLegacyNFT is ERC721, ERC721URIStorage, ReentrancyGuard, Ownable 
         
         // Pay creator
         address creator = nftItems[tokenId].creator;
-        payable(creator).transfer(licensePrice);
+        payable(creator).sendValue(licensePrice);
         
         // Refund excess
         if (msg.value > licensePrice) {
-            payable(msg.sender).transfer(msg.value - licensePrice);
+            payable(msg.sender).sendValue(msg.value - licensePrice);
         }
         
         emit LicenseGranted(tokenId, msg.sender, licenseType, licensePrice);
@@ -200,6 +202,11 @@ contract DigitalLegacyNFT is ERC721, ERC721URIStorage, ReentrancyGuard, Ownable 
     // Override required by Solidity
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
+    }
+
+    function burn(uint256 tokenId) public {
+        require(ownerOf(tokenId) == msg.sender, "DigitalLegacyNFT: Caller is not the owner");
+        _burn(tokenId);
     }
     
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
